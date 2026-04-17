@@ -40,6 +40,10 @@ spec:
     parameters:
       max_connections: "100"
       shared_buffers: 256MB
+      # CNPG defaults both min/max TLS protocol versions to TLSv1.3.
+      # Pinning to TLSv1.2 avoids sqlx-cli TLS negotiation failures on this local setup.
+      ssl_min_protocol_version: TLSv1.2
+      ssl_max_protocol_version: TLSv1.2
 
   enableSuperuserAccess: true
   superuserSecret:
