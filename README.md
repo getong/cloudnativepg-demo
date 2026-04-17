@@ -167,6 +167,68 @@ psql -h 127.0.0.1 -U postgres -d app
 # Enter password: PgSuper2026!
 ```
 
+### Why `psql -h 10.96.128.76` Fails in a Shell Script
+
+`10.96.128.76` is the `ClusterIP` of the Kubernetes service `pg18-cluster-rw`.
+That IP is reachable only from inside the Kubernetes cluster network.
+If you run a shell script on your host machine, `psql -h 10.96.128.76 -U postgres -d app`
+will usually fail because Docker Desktop does not expose Kubernetes `ClusterIP`
+services directly to the host network.
+
+Use one of these two patterns instead:
+
+#### Option 1: Run `psql` from your local shell via port-forward
+
+```bash
+kubectl port-forward svc/pg18-cluster-rw 5432:5432
+```
+
+Then connect through localhost:
+
+```bash
+PGPASSWORD='PgSuper2026!' psql -h 127.0.0.1 -p 5432 -U postgres -d app
+```
+
+Example shell script:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+kubectl port-forward svc/pg18-cluster-rw 5432:5432 >/tmp/pg18-port-forward.log 2>&1 &
+PF_PID=$!
+trap 'kill $PF_PID' EXIT
+
+until pg_isready -h 127.0.0.1 -p 5432 -U postgres >/dev/null 2>&1; do
+  sleep 1
+done
+
+PGPASSWORD='PgSuper2026!' psql -h 127.0.0.1 -p 5432 -U postgres -d app -c 'select version();'
+```
+
+#### Option 2: Run `psql` inside the cluster
+
+If the shell script runs in a pod, or if you start a temporary client pod, use the
+service DNS name instead of the `ClusterIP`:
+
+```bash
+PGPASSWORD='PgSuper2026!' psql -h pg18-cluster-rw.default.svc.cluster.local -p 5432 -U postgres -d app
+```
+
+Temporary client pod example:
+
+```bash
+kubectl run psql-client --rm -it --image=postgres:18 --restart=Never \
+  --env="PGPASSWORD=PgSuper2026!" -- \
+  psql -h pg18-cluster-rw.default.svc.cluster.local -p 5432 -U postgres -d app
+```
+
+Summary:
+
+- Host shell script: `kubectl port-forward` + `psql -h 127.0.0.1`
+- In-cluster shell script: `psql -h pg18-cluster-rw.default.svc.cluster.local`
+- Do not use the service `ClusterIP` from your host shell
+
 ### Verify the Cluster
 
 Once connected via psql, run these commands to verify:

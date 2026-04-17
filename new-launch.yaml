@@ -26,6 +26,16 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:18
   instances: 3
 
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: pg18-cluster-external
+            spec:
+              type: LoadBalancer
+
   postgresql:
     parameters:
       max_connections: "100"
