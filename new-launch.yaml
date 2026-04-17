@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg18-cluster-app-user
+# Decoded credentials: username=app  password=PgApp2026!
+data:
+  username: YXBw
+  password: UGdBcHAyMDI2IQ==
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg18-cluster-superuser
+# Decoded credentials: username=postgres  password=PgSuper2026!
+data:
+  username: cG9zdGdyZXM=
+  password: UGdTdXBlcjIwMjYh
+type: kubernetes.io/basic-auth
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg18-cluster
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  instances: 3
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: pg18-cluster-superuser
+
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: pg18-cluster-app-user
+      encoding: UTF8
+      localeCollate: C
+      localeCType: C
+
+  storage:
+    size: 2Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+  primaryUpdateStrategy: unsupervised
+  monitoring:
+    enablePodMonitor: false
