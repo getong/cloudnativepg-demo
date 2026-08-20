@@ -21,7 +21,7 @@ kubectl get nodes
 Apply the operator manifest using **server-side apply** (required because some CRDs exceed the client-side annotation size limit):
 
 ```bash
-kubectl apply --server-side -f cnpg-1.29.0.yaml
+kubectl apply --server-side -f cnpg-1.30.0.yaml
 ```
 
 Wait for the operator to be ready:
@@ -260,7 +260,7 @@ DROP TABLE test;
 
 ```bash
 kubectl delete -f new-launch.yaml
-kubectl delete --server-side -f cnpg-1.29.0.yaml
+kubectl delete --server-side -f cnpg-1.30.0.yaml
 ```
 
 ## Other Manifests
@@ -270,4 +270,4 @@ kubectl delete --server-side -f cnpg-1.29.0.yaml
 | `cluster-example.yaml` | Minimal 3-instance cluster (default PG image) |
 | `new.yaml` | Production-style single-instance PG 15 cluster with tuned parameters, affinity rules, backups, and monitoring |
 | `new-launch.yaml` | PostgreSQL 18 cluster for Docker Desktop |
-| `cnpg-1.29.0.yaml` | CloudNativePG operator v1.29.0 |
+| `cnpg-1.30.0.yaml` | CloudNativePG operator v1.30.0 |
